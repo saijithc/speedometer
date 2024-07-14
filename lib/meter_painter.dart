@@ -31,8 +31,23 @@ class MeterPainter extends CustomPainter {
     canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
     canvas.drawArc(largeRect, startAngle, sweepAngle, false, thickPaint);
     final pointedSweepAngle = angleToRadian(270 * percentage / 100);
-    canvas.drawArc(largeRect, startAngle, pointedSweepAngle, false,
-        thickPaint..color = Colors.pink);
+    final gradient = const SweepGradient(
+      colors: <Color>[
+        Color(0xFFEA4335),
+        Color(0xFFEA4335),
+        Color(0xFF34A853),
+        Color(0xFFFBBC05),
+        Color(0xFFEA4335),
+      ],
+      stops: <double>[0.0, 0.25, 0.5, 0.75, 1.0],
+    ).createShader(largeRect);
+
+    final gradientPaint = Paint()
+      ..shader = gradient
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10;
+    canvas.drawArc(
+        largeRect, startAngle, pointedSweepAngle, false, gradientPaint);
     final radius = width / 2;
     //lines
     for (num angle = 135; angle <= 405; angle += 4.5) {
@@ -43,6 +58,21 @@ class MeterPainter extends CustomPainter {
     // highlight line
     final highlight = List.generate(11, (index) => 135 + (27 * index));
     for (int i = 0; i < highlight.length; i++) {
+      // Needle
+      final needleAngle = 135 + 270 * percentage / 100;
+      final needleStart = center;
+      final needleEnd = angleToOffset(center, needleAngle, radius * 0.45);
+      final needlePaint = Paint()
+        ..color = Colors.red
+        ..strokeWidth = 4
+        ..style = PaintingStyle.stroke;
+      canvas.drawLine(needleStart, needleEnd, needlePaint);
+      final rect = Rect.fromCenter(
+          center: center, width: width * 0.25, height: height * 0.25);
+      final fillPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.black;
+      canvas.drawArc(rect, 360, 360, false, fillPaint);
       var angle = highlight[i];
       final start = angleToOffset(center, angle, radius * .7);
       final end = angleToOffset(center, angle, radius * .58);
@@ -60,7 +90,7 @@ class MeterPainter extends CustomPainter {
     final tp = TextPainter(
         text: TextSpan(
             text: "${percentage.toInt()}",
-            style: const TextStyle(fontSize: 50),
+            style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
             children: const [
               TextSpan(
                 text: '\nKM/H',
